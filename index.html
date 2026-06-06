@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyMind</title>
+
+  <!-- ==================== СТИЛИ (CSS) ==================== -->
+  <style>
+    /* :root — основные цвета приложения */
+    :root {
+      --black: #0F0F0F;     /* Основной тёмный цвет фона */
+      --white: #F5F5F5;     /* Светлый цвет текста */
+      --mustard: #E8B923;   /* Горчичный акцентный цвет */
+    }
+
+    /* Общие стили для всех элементов */
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+    }
+
+    /* ==================== ОСНОВНОЙ ФОН И ТЕЛО СТРАНИЦЫ ==================== */
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--black);
+      color: var(--white);
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ==================== ШАПКА (верхняя панель) ==================== */
+    header {
+      background-color: rgba(15, 15, 15, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #222;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo { 
+      font-size: 22px; 
+      font-weight: 700; 
+      color: var(--mustard); 
+    }
+
+    /* ==================== ОСНОВНОЙ КОНТЕНТ ==================== */
+    main {
+      padding: 20px;
+      min-height: calc(100vh - 70px);
+      background: linear-gradient(135deg, #0F0F0F 0%, #1A1A1A 100%);
+    }
+
+    /* ==================== ПЛАВАЮЩАЯ КНОПКА "+" ==================== */
+    .fab {
+      position: fixed;
+      bottom: 30px; right: 30px;
+      width: 65px; height: 65px;
+      background-color: var(--mustard);
+      color: var(--black);
+      border: none;
+      border-radius: 50%;
+      font-size: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 20px rgba(232, 185, 35, 0.4);
+      cursor: pointer;
+      z-index: 1000;
+    }
+
+    .fab:hover { transform: scale(1.1); }
+    .fab:active { transform: scale(0.95); }
+
+    /* ==================== СЕТКА ЗНАЧКОВ ЗАМЕТОК ==================== */
+    .notes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 24px;
+      margin-top: 30px;
+    }
+
+    /* ЗНАЧОК ОДНОЙ ЗАМЕТКИ */
+    .note-icon {
+      width: 110px; height: 110px;
+      background-color: #1C1C1E;
+      border-radius: 22px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      border: 2px solid #2A2A2E;
+      transition: all 0.2s ease;
+    }
+
+    .note-icon:hover {
+      border-color: var(--mustard);
+      transform: scale(1.08) translateY(-4px);
+    }
+
+    /* ==================== МОДАЛЬНОЕ ОКНО ЗАМЕТКИ ==================== */
+    .note-modal-overlay {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.92);
+      backdrop-filter: blur(20px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+    }
+
+    .note-modal {
+      background: #161618;
+      width: 92%; max-width: 860px;
+      height: 90vh;
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .note-modal-header {
+      padding: 16px 24px;
+      background: #1C1C1E;
+      border-bottom: 1px solid #333;
+      display: flex;
+      align-items: center;
+    }
+
+    .note-modal-title {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-size: 21px;
+      font-weight: 600;
+      color: #E8B923;
+    }
+
+    .note-modal-close {
+      background: none; border: none;
+      color: #777; font-size: 34px;
+      cursor: pointer;
+    }
+
+    .note-modal-content {
+      flex: 1;
+      padding: 28px 32px;
+      font-size: 17px;
+      line-height: 1.7;
+      background: #161618;
+      border: none; outline: none;
+      resize: none;
+      color: #e0e0e0;
+    }
+
+    .note-modal-footer {
+      padding: 12px 24px;
+      background: #1C1C1E;
+      border-top: 1px solid #333;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* ==================== МОДАЛЬНОЕ МЕНЮ ДОБАВЛЕНИЯ ==================== */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(12px);
+      display: none;
+      align-items: center; justify-content: center;
+      z-index: 2000;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ==================== ШАПКА ==================== -->
+  <header>
+    <div class="logo">MyMind</div>
+    <div class="header-title">Заметки</div>
+    <button onclick="exportBackup()" style="background:none;border:none;color:#E8B923;font-size:20px;cursor:pointer;">📤</button>
+  </header>
+
+  <!-- ==================== ОСНОВНАЯ ОБЛАСТЬ КОНТЕНТА ==================== -->
+  <main>
+    <h2>Мои заметки</h2>
+    <!-- Контейнер, куда будут добавляться иконки заметок -->
+    <div id="notesContainer" class="notes-grid"></div>
+  </main>
+
+  <!-- ==================== ПЛАВАЮЩАЯ КНОПКА "+" ==================== -->
+  <button class="fab" onclick="addNew()">+</button>
+
+  <!-- ==================== МОДАЛЬНОЕ МЕНЮ ДОБАВЛЕНИЯ ==================== -->
+  <div class="modal-overlay" id="addModal">
+    <div class="modal" style="background:#1C1C1E;width:320px;border-radius:18px;overflow:hidden;">
+      <div style="padding:20px 24px 12px;text-align:center;border-bottom:1px solid #333;">
+        <h3 style="color:var(--mustard);">Что добавить?</h3>
+      </div>
+      <div style="padding:8px 0;">
+        <div class="option" onclick="addNote()" style="padding:16px 24px;cursor:pointer;">
+          📝 Новая заметка
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- ==================== ОКНО РЕДАКТИРОВАНИЯ ЗАМЕТКИ ==================== -->
+  <div id="noteModal" class="note-modal-overlay"></div>
+
+      <!-- ==================== JAVASCRIPT (Скрипты) ==================== -->
+  <script>
+    // ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
+    let notes = JSON.parse(localStorage.getItem('myMindNotes')) || [];
+    let currentNoteId = null;
+
+    const notesContainer = document.getElementById('notesContainer');
+    const noteModal = document.getElementById('noteModal');
+
+    // ==================== СОХРАНЕНИЕ В LOCALSTORAGE ====================
+    function saveToLocalStorage() {
+      localStorage.setItem('myMindNotes', JSON.stringify(notes));
+    }
+
+    // ==================== ОТРИСОВКА ВСЕХ ЗАМЕТОК ====================
+    function renderNotes() {
+      notesContainer.innerHTML = '';
+      notes.forEach(note => {
+        const icon = document.createElement('div');
+        icon.className = 'note-icon';
+        icon.innerHTML = `
+          <div style="font-size:42px;">📝</div>
+          <div style="font-size:13px;text-align:center;padding:0 8px;">${note.title}</div>
+        `;
+        icon.onclick = () => openNote(note.id);
+        notesContainer.appendChild(icon);
+      });
+    }
+
+    function addNew() {
+      document.getElementById('addModal').style.display = 'flex';
+    }
+
+    function addNote() {
+      document.getElementById('addModal').style.display = 'none';
+
+      const newNote = {
+        id: Date.now(),
+        title: "Новая заметка",
+        content: ""
+      };
+
+      notes.push(newNote);
+      saveToLocalStorage();
+      renderNotes();
+      openNote(newNote.id);
+    }
+
+    // ==================== ОТКРЫТИЕ ЗАМЕТКИ ====================
+    function openNote(id) {
+      currentNoteId = id;
+      const note = notes.find(n => n.id === id);
+      if (!note) return;
+
+      noteModal.innerHTML = `
+        <div class="note-modal">
+          <div class="note-modal-header">
+            <input type="text" class="note-modal-title" value="${note.title.replace(/"/g, '&quot;')}" spellcheck="false">
+            <button class="note-modal-close">&times;</button>
+          </div>
+          <textarea class="note-modal-content" spellcheck="false">${note.content}</textarea>
+          
+          <div class="note-modal-footer">
+            <button onclick="deleteCurrentNote()" style="background:#ff3b30;color:white;border:none;padding:10px 16px;border-radius:12px;cursor:pointer;">
+              🗑 Удалить
+            </button>
+            <button onclick="saveNoteAsFile()" style="background:var(--mustard);color:#000;border:none;padding:12px 24px;border-radius:12px;font-weight:600;cursor:pointer;">
+              💾 Сохранить в Файлы
+            </button>
+          </div>
+        </div>
+      `;
+
+      const titleInput = noteModal.querySelector('.note-modal-title');
+      const contentArea = noteModal.querySelector('.note-modal-content');
+      const closeBtn = noteModal.querySelector('.note-modal-close');
+
+      titleInput.oninput = () => {
+        note.title = titleInput.value.trim() || "Без названия";
+        renderNotes();
+      };
+
+      contentArea.oninput = () => {
+        note.content = contentArea.value;
+      };
+
+      closeBtn.onclick = () => {
+        saveToLocalStorage();
+        noteModal.style.display = 'none';
+      };
+
+      noteModal.style.display = 'flex';
+    }
+
+    // ==================== СОХРАНЕНИЕ В ВЫБРАННУЮ ПАПКУ ====================
+window.saveNoteAsFile = async function() {
+  const note = notes.find(n => n.id === currentNoteId);
+  if (!note) return;
+
+  const text = `Заголовок: ${note.title}\n\n${note.content}`;
+
+  try {
+    const fileHandle = await window.showSaveFilePicker({
+      suggestedName: `${note.title}.txt`,
+      types: [
+        {
+          description: 'Текстовый файл',
+          accept: {
+            'text/plain': ['.txt']
+          }
+        }
+      ]
+    });
+
+    const writable = await fileHandle.createWritable();
+
+    await writable.write(text);
+
+    await writable.close();
+
+    alert('Файл сохранён');
+  }
+  catch(err) {
+    console.log(err);
+  }
+};
+
+    // ==================== УДАЛЕНИЕ ЗАМЕТКИ ====================
+    window.deleteCurrentNote = function() {
+      if (confirm('Удалить заметку навсегда?')) {
+        notes = notes.filter(n => n.id !== currentNoteId);
+        saveToLocalStorage();
+        noteModal.style.display = 'none';
+        renderNotes();
+      }
+    };
+
+    
+
+    // Закрытие меню добавления
+    document.getElementById('addModal').addEventListener('click', (e) => {
+      if (e.target.id === 'addModal') e.target.style.display = 'none';
+    });
+
+    // ==================== ЗАПУСК ====================
+    renderNotes();
+  </script>
+</body>
+</html>
